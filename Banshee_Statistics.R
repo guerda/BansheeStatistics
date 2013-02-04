@@ -29,3 +29,8 @@ artistPlayCountSelect <- "select a.name, sum(playcount) as count from coretracks
 artistPlayCount <- dbGetQuery(conn=con, statement=artistPlayCountSelect)
 barplotCount(artistPlayCount, file="Artist_Play_Count.png")
 
+ratingHistogramSelect <- "SELECT t.Rating FROM CoreTracks t WHERE t.Rating > 0 ORDER BY 1 ASC;"
+ratingHistogram <- dbGetQuery(conn=con, statement=ratingHistogramSelect)$Rating
+png(file="Rating_Histogram.png", width=800, height=800)
+hist(ratingHistogram, col=topo.colors(5))
+graphics.off()
