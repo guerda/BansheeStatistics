@@ -9,7 +9,9 @@ countOfArtists <- dbGetQuery(conn=con, statement="SELECT COUNT(1) FROM CoreArtis
 barplotCount <- function(data,file,count=20) {
   png(file=file, width=800, height=800)
   palette(topo.colors(count))
-  p <- barplot(data[1:count,2], names.arg=data[1:count,1], legend.text=data[1:count,1], col=topo.colors(count), ylim=c(0,data[1,2]*1.1))
+  ylim <- c(0,max(data[,2])*1.1)
+  print(ylim)
+  p <- barplot(data[1:count,2], names.arg=data[1:count,1], legend.text=data[1:count,1], col=topo.colors(count), ylim=ylim, las=2)
   text(p, data[1:count,2], labels=data[1:count,2],pos=3)
   graphics.off()
 }
@@ -29,10 +31,15 @@ artistPlayCountSelect <- "select a.name, sum(playcount) as count from coretracks
 artistPlayCount <- dbGetQuery(conn=con, statement=artistPlayCountSelect)
 barplotCount(artistPlayCount, file="Artist_Play_Count.png")
 
-ratingCountSelect <- "SELECT t.Rating, count(1) AS count FROM CoreTracks t WHERE t.Rating > 0;"
+ratingCountSelect <- "SELECT t.Rating, count(1) AS count FROM CoreTracks t WHERE t.Rating > 0 GROUP BY t.Rating;"
 ratingCount <- dbGetQuery(conn=con, statement=ratingCountSelect)
-barplotCount(ratingCount, file="Rating_Count.png")
+barplotCount(ratingCount, file="Rating_Count.png", count=5)
 
-yearCountSelect <- "SELECT t.year, count(1) AS count FROM CoreTracks t WHERE t.year > 0;"
+yearCountSelect <- "SELECT t.year, count(1) AS count FROM CoreTracks t WHERE t.year > 0 GROUP BY t.year;"
 yearCount <- dbGetQuery(conn=con, statement=yearCountSelect)
-barplotCount(yearCount, file="Year_Count.png")
+barplotCount(yearCount, file="Year_Count.png", count=length(yearCount[,1]))
+
+
+avgArtistRatingSelect <- "select a.Name, avg(t.Rating) as Rating, count(1) as Count from coretracks t left join coreartists a on a.artistid = t.artistid group by a.artistid order by Rating desc, Count DESC;"
+avgArtistRating <- dbGetQuery(conn=con, statement=avgArtistRatingSelect)
+barplotCount(avgArtistRating, file="Average_Artist_Rating.png")
