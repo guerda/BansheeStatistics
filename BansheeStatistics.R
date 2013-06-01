@@ -1,4 +1,5 @@
 library("RSQLite")
+library("hexbin")
 
 con <- dbConnect(drv="SQLite", dbname="~/.config/banshee-1/banshee.db")
 
@@ -47,4 +48,10 @@ png(file="Artist_Ratings.png",width=800,height=800)
 artistRatingsSelect <- "SELECT t.Rating, a.Name FROM coretracks t LEFT JOIN coreartists a ON a.ArtistID = t.ArtistID WHERE t.Rating > 0 AND a.ArtistId in (Select ArtistId FROM (Select a1.ArtistID, COUNT(1) from CoreArtists a1 left join CoreTracks t1 on t1.ArtistId = a1.ArtistId AND t1.PrimarySourceID = 1 GROUP BY a1.ArtistID ORDER BY 2 DESC LIMIT 10)) AND t.PrimarySourceID = 1 ORDER BY a.Name ASC;"
 artistRatings <- dbGetQuery(conn=con, statement=artistRatingsSelect)
 boxplot(artistRatings$Rating~artistRatings$Name, ylim=c(0,5), las=2)
+graphics.off()
+
+png(file="Rating_PlayCount.png", width=800, height=800)
+ select <- "SELECT t.Rating, t.PlayCount FROM CoreTracks t WHERE t.PrimarySourceId = 1"
+data <- dbGetQuery(conn=con, statement = select)
+plot(hexbin(data))
 graphics.off()
