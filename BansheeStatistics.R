@@ -40,7 +40,7 @@ yearCountSelect <- "SELECT t.year, count(1) AS count FROM CoreTracks t WHERE t.y
 yearCount <- dbGetQuery(conn=con, statement=yearCountSelect)
 barplotCount(yearCount, file="Year_Count.png", count=length(yearCount[,1]), title="Count of Tracks Per Year")
 
-avgArtistRatingSelect <- "SELECT a.Name, round(avg(t.Rating),2) as Rating, count(1) AS Count FROM coretracks t LEFT JOIN coreartists a ON a.artistid = t.artistid where a.ArtistId in (Select ArtistId FROM (Select a1.ArtistID, COUNT(1) from CoreArtists a1 left join CoreTracks t1 on t1.ArtistId = a1.ArtistId WHERE t1.PrimarySourceID = 1 GROUP BY a1.ArtistID ORDER BY 2 DESC LIMIT 10)) AND t.PrimarySourceID = 1 GROUP BY a.artistid ORDER BY Rating desc, Count DESC;"
+avgArtistRatingSelect <- "SELECT a.Name, round(avg(t.Rating),2) as Rating, count(1) AS Count FROM coretracks t LEFT JOIN coreartists a ON a.artistid = t.artistid WHERE a.ArtistId in (Select ArtistId FROM (Select a1.ArtistID, COUNT(1) from CoreArtists a1 left join CoreTracks t1 on t1.ArtistId = a1.ArtistId WHERE t1.PrimarySourceID = 1 GROUP BY a1.ArtistID ORDER BY 2 DESC LIMIT 10)) AND t.PrimarySourceID = 1 GROUP BY a.artistid ORDER BY Rating desc, Count DESC;"
 avgArtistRating <- dbGetQuery(conn=con, statement=avgArtistRatingSelect)
 barplotCount(avgArtistRating, file="Average_Artist_Rating.png", title="Average Rating per Artist")
 
@@ -54,4 +54,25 @@ png(file="Rating_PlayCount.png", width=800, height=800)
  select <- "SELECT t.Rating, t.PlayCount FROM CoreTracks t WHERE t.PrimarySourceId = 1"
 data <- dbGetQuery(conn=con, statement = select)
 plot(hexbin(data))
+graphics.off()
+
+png(file="Rating_Genre.png", width=800, height=800)
+select <- "SELECT t.Genre, t.Rating
+           FROM CoreTracks t
+           WHERE t.Genre in (
+             SELECT Genre
+             FROM (
+               SELECT * FROM (
+                 SELECT count(1) as mycount, t2.genre
+                 FROM coretracks t2
+                 WHERE t2.primarysourceid= 1
+                 GROUP BY t2.genre
+                 ORDER BY avg(t2.rating) desc
+               ) t1
+               WHERE t1.mycount > 50 LIMIT 10
+             ) 
+           ) AND t.PrimarySourceId = 1 AND t.Genre IS NOT NULL AND t.rating > 0
+           ORDER BY t.Rating DESC"
+data <- dbGetQuery(conn=con, statement=select)
+boxplot(Rating~Genre, data=data, las=2)
 graphics.off()
