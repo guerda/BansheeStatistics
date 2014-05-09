@@ -76,3 +76,27 @@ select <- "SELECT t.Genre, t.Rating
 data <- dbGetQuery(conn=con, statement=select)
 boxplot(Rating~Genre, data=data, las=2)
 graphics.off()
+
+#png(file="Duration Histogram", width=800, height=800)
+#select <- "SELECT t.Duration FROM CoreTracks t WHERE t.PrimarySourceID = 1"
+#data <- dbGetQuery(conn=con, statement=select)
+#data <- data/1000
+#data <- data[,1]
+#hist(data,3000)
+# outliers
+#q <- quantile(data[,1])
+#data <- data[data > q[2]]
+#data <- data[data < q[4]]
+#hist(data)
+
+png(file="PCA.png", width=800, height=800)
+select <- "SELECT * FROM CoreTracks t WHERE t.PrimarySourceID = 1"
+data <- dbGetQuery(conn=con, statement=select)
+
+numericColumns <- c("BitRate", "TrackNumber", "Duration", "Year", "Rating", "Score", "PlayCount", "SkipCount", "BPM")
+
+normalized <- data[names(data) %in% numericColumns]
+normalized <- scale(normalized)
+pca <- prcomp(normalized)
+biplot(pca)
+graphics.off()
