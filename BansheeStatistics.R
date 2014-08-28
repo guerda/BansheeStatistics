@@ -77,26 +77,26 @@ data <- dbGetQuery(conn=con, statement=select)
 boxplot(Rating~Genre, data=data, las=2)
 graphics.off()
 
-#png(file="Duration Histogram", width=800, height=800)
-#select <- "SELECT t.Duration FROM CoreTracks t WHERE t.PrimarySourceID = 1"
-#data <- dbGetQuery(conn=con, statement=select)
-#data <- data/1000
-#data <- data[,1]
-#hist(data,3000)
+png(file="Duration_Histogram.png", width=800, height=800)
+select <- "SELECT t.Duration FROM CoreTracks t WHERE t.PrimarySourceID = 1"
+data <- dbGetQuery(conn=con, statement=select)
+data <- data/1000/60
+data <- data[,1]
 # outliers
-#q <- quantile(data[,1])
-#data <- data[data > q[2]]
-#data <- data[data < q[4]]
-#hist(data)
+q <- quantile(data, probs=c(0.02,0.98))
+data <- data[data > q[1]]
+data <- data[data < q[2]]
+h <- hist(data, xlab="Duration of Tracks [min]", ylab="Count of Tracks", main="Histogram of Duration per Track (quantile 2% - 98%)",col=topo.colors(1), breaks=20, xakt="n")
+axis(1,at=h$mids, labels=h$mids)
 
 png(file="PCA.png", width=800, height=800)
 select <- "SELECT * FROM CoreTracks t WHERE t.PrimarySourceID = 1"
 data <- dbGetQuery(conn=con, statement=select)
 
-numericColumns <- c("BitRate", "TrackNumber", "Duration", "Year", "Rating", "Score", "PlayCount", "SkipCount", "BPM")
+numericColumns <- c("BitRate", "TrackNumber", "Duration", "Year", "Rating", "PlayCount", "SkipCount", "BPM", "BitRate")
 
 normalized <- data[names(data) %in% numericColumns]
 normalized <- scale(normalized)
 pca <- prcomp(normalized)
-biplot(pca)
+biplot(pca, col=c(8,1))
 graphics.off()
